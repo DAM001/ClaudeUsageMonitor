@@ -98,23 +98,51 @@ function formatPanel(panel, data) {
     const row = document.createElement("div");
     row.className = "usage-row";
 
-    row.appendChild(
-        buildUsageBlock(
-            "5h",
-            data.five_hour?.utilization ?? 0,
-            fmtResetTime(data.five_hour?.resets_at)
-        )
+    // Build children normally
+    const block5 = buildUsageBlock(
+        "5h",
+        data.five_hour?.utilization ?? 0,
+        fmtResetTime(data.five_hour?.resets_at)
     );
 
-    row.appendChild(
-        buildUsageBlock(
-            "7d",
-            data.seven_day?.utilization ?? 0,
-            fmtResetTime(data.seven_day?.resets_at)
-        )
+    const block7 = buildUsageBlock(
+        "7d",
+        data.seven_day?.utilization ?? 0,
+        fmtResetTime(data.seven_day?.resets_at)
     );
+
+    row.appendChild(block5);
+    row.appendChild(block7);
 
     panel.appendChild(row);
+
+    // --- ANIMATION FIX START ---
+
+    // Find bar elements
+    const bar5 = block5.querySelector(".usage-bar-inner");
+    const bar7 = block7.querySelector(".usage-bar-inner");
+
+    // Reset to 0 so animation always starts clean
+    bar5.style.width = "0%";
+    bar7.style.width = "0%";
+
+    bar5.classList.remove("high");
+    bar7.classList.remove("high");
+
+    // Force DOM reflow so transitions trigger
+    void bar5.offsetWidth;
+
+    // Now animate to real values
+    const util5 = data.five_hour?.utilization ?? 0;
+    const util7 = data.seven_day?.utilization ?? 0;
+
+    bar5.style.width = util5 + "%";
+    bar7.style.width = util7 + "%";
+
+    if (util5 >= 90) bar5.classList.add("high");
+    if (util7 >= 90) bar7.classList.add("high");
+
+    // --- ANIMATION FIX END ---
 }
 
 async function mountPanel() {
@@ -124,8 +152,13 @@ async function mountPanel() {
     const composer = await waitForComposer();
     if (!composer) return;
 
+    // Same correct placement as before
     const buttonRow = composer.closest(".flex").parentElement;
     if (!buttonRow) return;
+
+    // STOP DUPLICATES: ensure only 1 injection per composer container
+    if (buttonRow.dataset.usageInjected === "true") return;
+    buttonRow.dataset.usageInjected = "true";
 
     const panel = createUsagePanel();
     buttonRow.appendChild(panel);
@@ -167,15 +200,24 @@ async function init() {
     });
 
     // Patch against Claude rerendering UI
-    const observer = new MutationObserver(() => {
-        chrome.storage.local.get(["showUsage"], ({ showUsage }) => {
-            const exists = document.getElementById("claude-usage-panel");
+    let scheduled = false;
 
-            if (showUsage === false) {
-                if (exists) exists.remove();
-            } else {
-                if (!exists) mountPanel();
-            }
+    const observer = new MutationObserver(() => {
+        if (scheduled) return;
+        scheduled = true;
+
+        requestAnimationFrame(() => {
+            scheduled = false;
+
+            chrome.storage.local.get(["showUsage"], ({ showUsage }) => {
+                const exists = document.getElementById("claude-usage-panel");
+
+                if (showUsage === false) {
+                    if (exists) exists.remove();
+                } else {
+                    if (!exists) mountPanel();
+                }
+            });
         });
     });
 

@@ -59,6 +59,16 @@ async function refresh() {
     const data = await fetchUsage(orgId);
     if (!data) return;
 
+    // Reset bars to 0 first for smooth animation
+    bar5h.style.width = "0%";
+    bar7d.style.width = "0%";
+    bar5h.classList.remove("high");
+    bar7d.classList.remove("high");
+
+    // Force a layout reflow so animations restart properly
+    void bar5h.offsetWidth;
+
+    // Now animate to actual values
     const util5 = data.five_hour?.utilization ?? 0;
     bar5h.style.width = util5 + "%";
     bar5h.classList.toggle("high", util5 >= 90);
@@ -69,6 +79,7 @@ async function refresh() {
     bar7d.classList.toggle("high", util7 >= 90);
     reset7d.textContent = "reset in " + fmtReset(data.seven_day?.resets_at);
 
+    // Timestamp
     const now = new Date();
     lastUpdated.textContent =
         "Updated: " +

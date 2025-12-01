@@ -1,5 +1,5 @@
 //
-// Claude Usage Inject Script (Improved layout + reset times)
+// Claude Usage Inject (with working toggle)
 //
 
 async function waitForComposer(timeout = 15000) {
@@ -12,18 +12,15 @@ async function waitForComposer(timeout = 15000) {
             else if (Date.now() > deadline) resolve(null);
             else requestAnimationFrame(check);
         }
-
         check();
     });
 }
 
 async function fetchUsage(orgId) {
     try {
-        const resp = await fetch(
-            `https://claude.ai/api/organizations/${orgId}/usage`,
-            { credentials: "include" }
-        );
-
+        const resp = await fetch(`https://claude.ai/api/organizations/${orgId}/usage`, {
+            credentials: "include"
+        });
         if (!resp.ok) return { error: `HTTP ${resp.status}` };
         return resp.json();
     } catch (e) {
@@ -55,7 +52,6 @@ function createProgressBar(percent) {
     inner.style.width = `${percent}%`;
 
     if (percent >= 90) inner.classList.add("high");
-
     outer.appendChild(inner);
     return outer;
 }
@@ -92,12 +88,8 @@ function buildUsageBlock(title, utilization, resetTime) {
 }
 
 function formatPanel(panel, data) {
-    if (!data) {
-        panel.textContent = "No data";
-        return;
-    }
-    if (data.error) {
-        panel.textContent = "Error: " + data.error;
+    if (!data || data.error) {
+        panel.textContent = data?.error ?? "No data";
         return;
     }
 
@@ -106,33 +98,41 @@ function formatPanel(panel, data) {
     const row = document.createElement("div");
     row.className = "usage-row";
 
-    const fiveUtil = data.five_hour?.utilization ?? 0;
-    const fiveReset = fmtResetTime(data.five_hour?.resets_at);
+    row.appendChild(
+        buildUsageBlock(
+            "5h",
+            data.five_hour?.utilization ?? 0,
+            fmtResetTime(data.five_hour?.resets_at)
+        )
+    );
 
-    const sevenUtil = data.seven_day?.utilization ?? 0;
-    const sevenReset = fmtResetTime(data.seven_day?.resets_at);
-
-    row.appendChild(buildUsageBlock("5h", fiveUtil, fiveReset));
-    row.appendChild(buildUsageBlock("7d", sevenUtil, sevenReset));
+    row.appendChild(
+        buildUsageBlock(
+            "7d",
+            data.seven_day?.utilization ?? 0,
+            fmtResetTime(data.seven_day?.resets_at)
+        )
+    );
 
     panel.appendChild(row);
 }
 
 async function mountPanel() {
+    const existing = document.getElementById("claude-usage-panel");
+    if (existing) return;
+
     const composer = await waitForComposer();
     if (!composer) return;
 
     const buttonRow = composer.closest(".flex").parentElement;
     if (!buttonRow) return;
 
-    if (document.getElementById("claude-usage-panel")) return;
-
     const panel = createUsagePanel();
     buttonRow.appendChild(panel);
 
     chrome.storage.local.get(["orgId"], ({ orgId }) => {
         if (!orgId) {
-            panel.textContent = "Set org ID in extension popup.";
+            panel.textContent = "Set org ID in popup.";
             return;
         }
 
@@ -147,12 +147,36 @@ async function mountPanel() {
 }
 
 async function init() {
-    await mountPanel();
+    // Mount initially if toggled on
+    chrome.storage.local.get(["showUsage"], ({ showUsage }) => {
+        if (showUsage !== false) mountPanel();
+    });
 
-    const observer = new MutationObserver(() => {
-        if (!document.getElementById("claude-usage-panel")) {
-            mountPanel();
+    // React to toggle changes
+    chrome.storage.onChanged.addListener((changes) => {
+        if (changes.showUsage) {
+            const enabled = changes.showUsage.newValue;
+            const panel = document.getElementById("claude-usage-panel");
+
+            if (enabled) {
+                if (!panel) mountPanel();
+            } else {
+                if (panel) panel.remove();
+            }
         }
+    });
+
+    // Patch against Claude rerendering UI
+    const observer = new MutationObserver(() => {
+        chrome.storage.local.get(["showUsage"], ({ showUsage }) => {
+            const exists = document.getElementById("claude-usage-panel");
+
+            if (showUsage === false) {
+                if (exists) exists.remove();
+            } else {
+                if (!exists) mountPanel();
+            }
+        });
     });
 
     observer.observe(document.body, { childList: true, subtree: true });

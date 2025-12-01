@@ -3,51 +3,33 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Claude Usage</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 10px;
-            width: 320px;
-        }
 
-        #data {
-            white-space: pre-wrap;
-            margin-top: 10px;
-        }
-
-        input {
-            width: 100%;
-            padding: 6px;
-            margin-top: 4px;
-        }
-
-        button {
-            margin-top: 10px;
-            width: 100%;
-            padding: 6px;
-        }
-
-        small {
-            color: #666;
-        }
-    </style>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="toggle.css">
 </head>
 
 <body>
 
-    <h2>Claude Usage</h2>
+    <!-- Refresh button (icon) -->
+    <img id="refreshBtn" src="assets/refresh.png" alt="Refresh">
 
-    <label>Organization ID</label>
-    <input id="orgId" placeholder="Enter org ID">
-    <small>Saved automatically</small>
+    <h2>Claude Usage Monitor</h2>
 
-    <button id="refresh">Refresh Now</button>
+    <div class="section">
+        <label for="orgId">Organization ID</label>
+        <input id="orgId" type="password" placeholder="Enter org ID">
+    </div>
 
-    <div id="data">No data yet…</div>
+    <div class="section toggle-wrap">
+        <span class="toggle-label">Show usage in Claude</span>
+
+        <label class="switch">
+            <input id="toggleUsage" type="checkbox">
+            <span class="slider"></span>
+        </label>
+    </div>
 
     <script src="popup.js"></script>
-
 </body>
 
 </html>

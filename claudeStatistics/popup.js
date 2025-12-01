@@ -1,6 +1,14 @@
 const orgInput = document.getElementById("orgId");
 const toggleUsage = document.getElementById("toggleUsage");
 const refreshBtn = document.getElementById("refreshBtn");
+const lastUpdated = document.getElementById("lastUpdated");
+
+// Popup usage elements
+const bar5h = document.getElementById("popup-5h-bar");
+const reset5h = document.getElementById("popup-5h-reset");
+
+const bar7d = document.getElementById("popup-7d-bar");
+const reset7d = document.getElementById("popup-7d-reset");
 
 // Load settings
 chrome.storage.local.get(["orgId", "showUsage"], (res) => {
@@ -8,38 +16,69 @@ chrome.storage.local.get(["orgId", "showUsage"], (res) => {
     toggleUsage.checked = res.showUsage ?? true;
 });
 
-// Save org ID immediately on typing
+// Save instantly
 orgInput.addEventListener("input", () => {
     chrome.storage.local.set({ orgId: orgInput.value.trim() });
 });
 
-// Save toggle state immediately
 toggleUsage.addEventListener("change", () => {
     chrome.storage.local.set({ showUsage: toggleUsage.checked });
 });
 
-// Refresh icon click (test fetch)
-refreshBtn.addEventListener("click", async () => {
-    const orgId = orgInput.value.trim();
-    if (!orgId) {
-        console.log("No org ID set");
-        return;
-    }
-
+async function fetchUsage(orgId) {
     try {
         const resp = await fetch(`https://claude.ai/api/organizations/${orgId}/usage`, {
             credentials: "include"
         });
 
-        if (!resp.ok) {
-            console.log("Error:", resp.status);
-            return;
-        }
-
-        const data = await resp.json();
-        console.log("Usage data:", data);
-
-    } catch (e) {
-        console.log("Fetch error:", e.toString());
+        if (!resp.ok) return null;
+        return await resp.json();
+    } catch {
+        return null;
     }
+}
+
+function fmtReset(dateStr) {
+    if (!dateStr) return "--";
+    const t = new Date(dateStr);
+    const diff = t - new Date();
+    if (diff <= 0) return "soon";
+
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+
+    if (h > 0) return `${h}h ${mm}m`;
+    return `${mm}m`;
+}
+
+async function refresh() {
+    const orgId = orgInput.value.trim();
+    if (!orgId) return;
+
+    const data = await fetchUsage(orgId);
+    if (!data) return;
+
+    const util5 = data.five_hour?.utilization ?? 0;
+    bar5h.style.width = util5 + "%";
+    bar5h.classList.toggle("high", util5 >= 90);
+    reset5h.textContent = "reset in " + fmtReset(data.five_hour?.resets_at);
+
+    const util7 = data.seven_day?.utilization ?? 0;
+    bar7d.style.width = util7 + "%";
+    bar7d.classList.toggle("high", util7 >= 90);
+    reset7d.textContent = "reset in " + fmtReset(data.seven_day?.resets_at);
+
+    const now = new Date();
+    lastUpdated.textContent =
+        "Updated: " +
+        now.getHours().toString().padStart(2, "0") + ":" +
+        now.getMinutes().toString().padStart(2, "0");
+}
+
+refreshBtn.addEventListener("click", refresh);
+
+// Auto-refresh when the popup becomes visible
+document.addEventListener("DOMContentLoaded", () => {
+    refresh();
 });

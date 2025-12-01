@@ -10,7 +10,7 @@
 
 <body>
 
-    <!-- Refresh button (icon) -->
+    <!-- Refresh icon -->
     <img id="refreshBtn" src="assets/refresh.png" alt="Refresh">
 
     <h2>Claude Usage Monitor</h2>
@@ -28,6 +28,32 @@
             <span class="slider"></span>
         </label>
     </div>
+
+    <!-- Usage sliders -->
+    <div id="popup-usage">
+        <div class="usage-block">
+            <div class="usage-line">
+                <span class="usage-title">5h:</span>
+                <span class="usage-reset" id="popup-5h-reset">--</span>
+            </div>
+            <div class="usage-bar-outer">
+                <div class="usage-bar-inner" id="popup-5h-bar"></div>
+            </div>
+        </div>
+
+        <div class="usage-block">
+            <div class="usage-line">
+                <span class="usage-title">7d:</span>
+                <span class="usage-reset" id="popup-7d-reset">--</span>
+            </div>
+            <div class="usage-bar-outer">
+                <div class="usage-bar-inner" id="popup-7d-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timestamp at bottom -->
+    <div id="lastUpdated">Updated: --:--</div>
 
     <script src="popup.js"></script>
 </body>

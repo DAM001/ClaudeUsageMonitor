@@ -5,7 +5,7 @@
     --theme-color: #d97757;
 }
 
-/* Popup window container */
+/* Popup container */
 body {
     font-family: sans-serif;
     margin: 16px;
@@ -13,10 +13,9 @@ body {
     background: var(--background-color);
     color: var(--text-color);
     position: relative;
-    /* allows absolute positioning inside */
 }
 
-/* Top-right refresh icon */
+/* Refresh icon */
 #refreshBtn {
     position: absolute;
     top: 0;
@@ -33,19 +32,29 @@ body {
     transform: rotate(20deg);
 }
 
-h2 {
-    font-size: 16px;
-    margin-bottom: 12px;
-    color: var(--text-color);
-    font-weight: 600;
+/* Last updated timestamp */
+#lastUpdated {
+    margin-top: 18px;
+    text-align: center;
+    width: 100%;
+    font-size: 11px;
+    color: var(--secondary-text-color);
+    opacity: 0.8;
 }
 
-/* Sections */
+/* Title */
+h2 {
+    font-size: 16px;
+    margin-bottom: 18px;
+    margin-top: 4px;
+    color: var(--text-color);
+}
+
+/* Inputs */
 .section {
     margin-bottom: 14px;
 }
 
-/* Inputs */
 input[type="password"],
 input[type="text"] {
     width: calc(100% - 16px);
@@ -58,7 +67,45 @@ input[type="text"] {
     font-size: 13px;
 }
 
-/* Toggle label */
-.toggle-label {
-    color: var(--text-color);
+/* Usage block (same style as injected panel) */
+.usage-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+/* Title + reset line */
+.usage-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usage-title {
+    font-weight: 600;
+}
+
+.usage-reset {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* Slider bar */
+.usage-bar-outer {
+    height: 6px;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #262624;
+}
+
+.usage-bar-inner {
+    height: 100%;
+    transition: width 0.3s ease;
+    background: #0ea5e9;
+}
+
+.usage-bar-inner.high {
+    background: #d9534f;
 }

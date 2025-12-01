@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Claude Usage Monitor",
+    "version": "1.3",
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "storage"
+    ],
+    "host_permissions": [
+        "https://claude.ai/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://claude.ai/*"
+            ],
+            "js": [
+                "inject.js"
+            ],
+            "css": [
+                "usage.css"
+            ],
+            "run_at": "document_idle"
+        }
+    ]
+}

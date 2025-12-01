@@ -1,0 +1,65 @@
+/* Panel container */
+#claude-usage-panel {
+    padding: 0 12px 12px;
+    border-radius: 8px;
+    color: #efeeea;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    user-select: none;
+}
+
+/* Row containing 5h + 7d side by side */
+.usage-row {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    width: 100%;
+}
+
+/* Each usage block */
+.usage-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Label + reset time line */
+.usage-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.usage-title {
+    font-weight: 600;
+}
+
+.usage-reset {
+    opacity: 0.8;
+    font-size: 11px;
+}
+
+/* Progress bar container */
+.usage-bar-outer {
+    height: 6px;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #262624;
+}
+
+/* Progress fill */
+.usage-bar-inner {
+    height: 100%;
+    transition: width 0.3s ease;
+    background: #0ea5e9;
+}
+
+/* High usage red */
+.usage-bar-inner.high {
+    background: #d9534f;
+}

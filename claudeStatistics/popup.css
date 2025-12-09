@@ -56,7 +56,8 @@ h2 {
 }
 
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
     width: calc(100% - 16px);
     padding: 6px;
     border-radius: 6px;

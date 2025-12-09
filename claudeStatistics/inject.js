@@ -1,5 +1,5 @@
 //
-// Claude Usage Inject (with working toggle)
+// Claude Usage Inject (with working toggle and refresh rate)
 //
 
 async function waitForComposer(timeout = 15000) {
@@ -145,6 +145,8 @@ function formatPanel(panel, data) {
     // --- ANIMATION FIX END ---
 }
 
+let updateInterval = null;
+
 async function mountPanel() {
     const existing = document.getElementById("claude-usage-panel");
     if (existing) return;
@@ -163,11 +165,13 @@ async function mountPanel() {
     const panel = createUsagePanel();
     buttonRow.appendChild(panel);
 
-    chrome.storage.local.get(["orgId"], ({ orgId }) => {
+    chrome.storage.local.get(["orgId", "refreshRate"], ({ orgId, refreshRate }) => {
         if (!orgId) {
             panel.textContent = "Set org ID in popup.";
             return;
         }
+
+        const rate = (refreshRate && refreshRate > 0) ? refreshRate : 60;
 
         async function update() {
             const data = await fetchUsage(orgId);
@@ -175,7 +179,13 @@ async function mountPanel() {
         }
 
         update();
-        setInterval(update, 60 * 1000);
+        
+        // Clear any existing interval before setting a new one
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+        
+        updateInterval = setInterval(update, rate * 1000);
     });
 }
 
@@ -185,7 +195,7 @@ async function init() {
         if (showUsage !== false) mountPanel();
     });
 
-    // React to toggle changes
+    // React to toggle and refresh rate changes
     chrome.storage.onChanged.addListener((changes) => {
         if (changes.showUsage) {
             const enabled = changes.showUsage.newValue;
@@ -194,7 +204,38 @@ async function init() {
             if (enabled) {
                 if (!panel) mountPanel();
             } else {
-                if (panel) panel.remove();
+                if (panel) {
+                    panel.remove();
+                    // Clear interval when panel is hidden
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = null;
+                    }
+                }
+            }
+        }
+
+        // Handle refresh rate changes
+        if (changes.refreshRate) {
+            const panel = document.getElementById("claude-usage-panel");
+            if (panel) {
+                // Restart the interval with new rate
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                }
+                
+                chrome.storage.local.get(["orgId", "refreshRate"], ({ orgId, refreshRate }) => {
+                    if (orgId) {
+                        const rate = (refreshRate && refreshRate > 0) ? refreshRate : 60;
+                        
+                        async function update() {
+                            const data = await fetchUsage(orgId);
+                            formatPanel(panel, data);
+                        }
+                        
+                        updateInterval = setInterval(update, rate * 1000);
+                    }
+                });
             }
         }
     });
@@ -213,7 +254,14 @@ async function init() {
                 const exists = document.getElementById("claude-usage-panel");
 
                 if (showUsage === false) {
-                    if (exists) exists.remove();
+                    if (exists) {
+                        exists.remove();
+                        // Clear interval when panel is removed
+                        if (updateInterval) {
+                            clearInterval(updateInterval);
+                            updateInterval = null;
+                        }
+                    }
                 } else {
                     if (!exists) mountPanel();
                 }

@@ -1,4 +1,5 @@
 const orgInput = document.getElementById("orgId");
+const refreshRateInput = document.getElementById("refreshRate");
 const toggleUsage = document.getElementById("toggleUsage");
 const refreshBtn = document.getElementById("refreshBtn");
 const lastUpdated = document.getElementById("lastUpdated");
@@ -11,14 +12,20 @@ const bar7d = document.getElementById("popup-7d-bar");
 const reset7d = document.getElementById("popup-7d-reset");
 
 // Load settings
-chrome.storage.local.get(["orgId", "showUsage"], (res) => {
+chrome.storage.local.get(["orgId", "showUsage", "refreshRate"], (res) => {
     if (res.orgId) orgInput.value = res.orgId;
     toggleUsage.checked = res.showUsage ?? true;
+    if (res.refreshRate) refreshRateInput.value = res.refreshRate;
 });
 
 // Save instantly
 orgInput.addEventListener("input", () => {
     chrome.storage.local.set({ orgId: orgInput.value.trim() });
+});
+
+refreshRateInput.addEventListener("input", () => {
+    const rate = parseInt(refreshRateInput.value) || 60;
+    chrome.storage.local.set({ refreshRate: rate });
 });
 
 toggleUsage.addEventListener("change", () => {

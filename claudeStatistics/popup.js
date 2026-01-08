@@ -5,9 +5,11 @@ const refreshBtn = document.getElementById("refreshBtn");
 const lastUpdated = document.getElementById("lastUpdated");
 
 // Popup usage elements
+const title5h = document.getElementById("popup-5h-title");
 const bar5h = document.getElementById("popup-5h-bar");
 const reset5h = document.getElementById("popup-5h-reset");
 
+const title7d = document.getElementById("popup-7d-title");
 const bar7d = document.getElementById("popup-7d-bar");
 const reset7d = document.getElementById("popup-7d-reset");
 
@@ -77,11 +79,13 @@ async function refresh() {
 
     // Now animate to actual values
     const util5 = data.five_hour?.utilization ?? 0;
+    title5h.textContent = `5h: ${util5}%`;
     bar5h.style.width = util5 + "%";
     bar5h.classList.toggle("high", util5 >= 90);
     reset5h.textContent = "reset in " + fmtReset(data.five_hour?.resets_at);
 
     const util7 = data.seven_day?.utilization ?? 0;
+    title7d.textContent = `7d: ${util7}%`;
     bar7d.style.width = util7 + "%";
     bar7d.classList.toggle("high", util7 >= 90);
     reset7d.textContent = "reset in " + fmtReset(data.seven_day?.resets_at);

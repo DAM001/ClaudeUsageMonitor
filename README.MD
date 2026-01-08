@@ -2,6 +2,12 @@
 
 Chrome extension that displays your Claude AI usage limits directly on claude.ai.
 
+## Preview
+
+![In-page Usage Display](preview_chat.png)
+
+![Extension Popup](preview_popup.png)
+
 ## Features
 
 - In-page usage display with 5-hour and 7-day limits

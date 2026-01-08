@@ -87,7 +87,7 @@ function buildUsageBlock(title, utilization, resetTime) {
     return block;
 }
 
-function formatPanel(panel, data) {
+function formatPanel(panel, data, updateFn) {
     if (!data || data.error) {
         panel.textContent = data?.error ?? "No data";
         return;
@@ -114,6 +114,17 @@ function formatPanel(panel, data) {
     row.appendChild(block5);
     row.appendChild(block7);
 
+    // Add refresh button inside the row
+    const refreshBtn = document.createElement("img");
+    refreshBtn.id = "claude-usage-refresh";
+    refreshBtn.src = chrome.runtime.getURL("assets/refresh.png");
+    refreshBtn.alt = "Refresh";
+    refreshBtn.className = "usage-refresh-btn";
+    refreshBtn.addEventListener("click", () => {
+        if (updateFn) updateFn();
+    });
+
+    row.appendChild(refreshBtn);
     panel.appendChild(row);
 
     // --- ANIMATION FIX START ---
@@ -175,16 +186,16 @@ async function mountPanel() {
 
         async function update() {
             const data = await fetchUsage(orgId);
-            formatPanel(panel, data);
+            formatPanel(panel, data, update);
         }
 
         update();
-        
+
         // Clear any existing interval before setting a new one
         if (updateInterval) {
             clearInterval(updateInterval);
         }
-        
+
         updateInterval = setInterval(update, rate * 1000);
     });
 }
@@ -227,12 +238,12 @@ async function init() {
                 chrome.storage.local.get(["orgId", "refreshRate"], ({ orgId, refreshRate }) => {
                     if (orgId) {
                         const rate = (refreshRate && refreshRate > 0) ? refreshRate : 60;
-                        
+
                         async function update() {
                             const data = await fetchUsage(orgId);
-                            formatPanel(panel, data);
+                            formatPanel(panel, data, update);
                         }
-                        
+
                         updateInterval = setInterval(update, rate * 1000);
                     }
                 });

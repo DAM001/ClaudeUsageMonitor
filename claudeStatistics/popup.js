@@ -3,6 +3,7 @@ const refreshRateInput = document.getElementById("refreshRate");
 const toggleUsage = document.getElementById("toggleUsage");
 const refreshBtn = document.getElementById("refreshBtn");
 const lastUpdated = document.getElementById("lastUpdated");
+const headerTitle = document.getElementById("headerTitle");
 
 // Popup usage elements
 const title5h = document.getElementById("popup-5h-title");
@@ -99,6 +100,11 @@ async function refresh() {
 }
 
 refreshBtn.addEventListener("click", refresh);
+
+// Open Claude on header click
+headerTitle.addEventListener("click", () => {
+    chrome.tabs.create({ url: "https://claude.ai/new" });
+});
 
 // Auto-refresh when the popup becomes visible
 document.addEventListener("DOMContentLoaded", () => {

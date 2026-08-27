@@ -1,6 +1,9 @@
 # Claude Usage Monitor
 
-Chrome extension that displays your Claude AI usage limits directly on claude.ai.
+Displays your Claude AI usage limits directly where you work. Two flavors in this repo:
+
+- [`claudeStatistics`](claudeStatistics/) — Chrome extension, shows usage bars on claude.ai
+- [`claudeStatisticsVSCode`](claudeStatisticsVSCode/) — VS Code extension, shows usage in the status bar
 
 ## Preview
 
@@ -8,7 +11,9 @@ Chrome extension that displays your Claude AI usage limits directly on claude.ai
 
 ![Extension Popup](preview_popup.png)
 
-## Features
+## Chrome Extension
+
+### Features
 
 - In-page usage display with 5-hour and 7-day limits
 - Color-coded progress bars (blue → red at 90%)
@@ -16,14 +21,14 @@ Chrome extension that displays your Claude AI usage limits directly on claude.ai
 - Quick access popup with usage stats
 - Clickable header to open new Claude chat
 
-## Installation
+### Installation
 
 1. Clone this repository
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable "Developer mode"
 4. Click "Load unpacked" and select the `claudeStatistics` folder
 
-## Setup
+### Setup
 
 1. Click the extension icon
 2. Enter your Claude Organization ID
@@ -38,11 +43,32 @@ Chrome extension that displays your Claude AI usage limits directly on claude.ai
 5. Look for `/api/organizations/` request
 6. Copy the org ID (format: `org_xxxxxxxxxxxxxxxxxxxxx`)
 
-## Privacy
+### Privacy
 
 - Organization ID stored locally only
 - No external data sharing
 - Direct API calls to claude.ai
+
+## VS Code Extension
+
+Shows `5h 42% · 7d 15%` in the status bar, with reset times on hover. Runs your real Chrome in a separate, isolated profile that you log into once — no cookies or headers to copy, since claude.ai's Cloudflare/session protections only trust an actual logged-in browser.
+
+### Installation
+
+1. Clone this repository
+2. In `claudeStatisticsVSCode`, run `npm install` then `npx playwright install chromium` (one-time, downloads a Chromium build)
+3. Open the `claudeStatisticsVSCode` folder in VS Code
+4. Press `F5` to run it in an Extension Development Host
+
+   (To install permanently: `npm install -g @vscode/vsce`, run `vsce package` in `claudeStatisticsVSCode`, then install the generated `.vsix` from the Extensions view → `...` → "Install from VSIX...")
+
+### Setup
+
+1. Click the status bar item ("Claude Usage: click to log in")
+2. Log in to claude.ai in the Chrome window that opens — it minimizes itself and keeps running as a background process once you land on the chat screen (only needed once: it survives VS Code restarts and is shared across all your VS Code windows)
+3. Usage refreshes automatically; click the status bar item any time to refresh, log out, or reconfigure
+
+See [`claudeStatisticsVSCode/README.md`](claudeStatisticsVSCode/README.md) for details.
 
 ## License
 

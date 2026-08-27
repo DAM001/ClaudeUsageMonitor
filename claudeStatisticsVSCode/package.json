@@ -1,0 +1,51 @@
+{
+  "name": "claude-usage-monitor-vscode",
+  "displayName": "Claude Usage Monitor",
+  "description": "Shows your Claude AI 5-hour and 7-day usage limits in the VS Code status bar",
+  "version": "1.0.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "dependencies": {
+    "playwright": "^1.62.1"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeUsageMonitor.menu",
+        "title": "Claude Usage Monitor: Open Menu"
+      },
+      {
+        "command": "claudeUsageMonitor.login",
+        "title": "Claude Usage Monitor: Log In"
+      },
+      {
+        "command": "claudeUsageMonitor.logout",
+        "title": "Claude Usage Monitor: Log Out"
+      },
+      {
+        "command": "claudeUsageMonitor.refresh",
+        "title": "Claude Usage Monitor: Refresh Now"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Usage Monitor",
+      "properties": {
+        "claudeUsageMonitor.refreshRate": {
+          "type": "number",
+          "default": 60,
+          "minimum": 5,
+          "description": "How often (in seconds) to refresh usage data."
+        }
+      }
+    }
+  }
+}

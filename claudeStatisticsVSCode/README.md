@@ -2,7 +2,7 @@
 
 Shows your Claude AI 5-hour and 7-day usage limits in the VS Code status bar.
 
-Runs your real Chrome (or Edge) browser in a separate, isolated profile. You log in to claude.ai in it once, then it minimizes itself and stays open in the background, so the extension can keep reading your usage through that same live, logged-in session — the same way the Chrome extension reads it from your regular browser tab.
+Runs your real Chrome (or Edge) browser in a separate, isolated profile. You log in to claude.ai in it once, then it hides itself and stays open in the background, so the extension can keep reading your usage through that same live, logged-in session — the same way the Chrome extension reads it from your regular browser tab.
 
 ## Install (run from source)
 
@@ -20,7 +20,7 @@ Runs your real Chrome (or Edge) browser in a separate, isolated profile. You log
 
 1. Click the status bar item (bottom right, "Claude Usage: click to log in").
 2. A Chrome window opens on the claude.ai login page — log in as normal.
-3. Once you land on the chat screen, the window minimizes itself automatically and usage starts showing in the status bar.
+3. Once you land on the chat screen, the window hides itself automatically and usage starts showing in the status bar.
 
 That's the only time you'll see this. The browser runs as its own background process (detached from VS Code), so:
 - Closing/reloading VS Code, or restarting your machine, doesn't need a re-login — the browser process keeps running in the background regardless, and even if it does eventually get closed, your claude.ai session is saved to disk in its profile and comes back automatically.
@@ -32,7 +32,7 @@ Click the status bar item any time for **Refresh Now**, **Log Out**, or settings
 
 ## Why a whole browser instead of a simple HTTP request?
 
-claude.ai sits behind Cloudflare and its own session checks, both of which are built to recognize (and block) plain scripted requests — even valid-looking cookies get rejected, and even automated *browsers* get flagged if they look automated (e.g. Playwright's default launch sets `navigator.webdriver = true`, and headless mode has its own tells). So this extension spawns your actual installed Chrome directly — no automation flags, no headless mode — and just keeps that one real, already-logged-in window running in the background (minimized) instead of relaunching a fresh instance per refresh.
+claude.ai sits behind Cloudflare and its own session checks, both of which are built to recognize (and block) plain scripted requests — even valid-looking cookies get rejected, and even automated *browsers* get flagged if they look automated (e.g. Playwright's default launch sets `navigator.webdriver = true`, and headless mode has its own tells). So this extension spawns your actual installed Chrome directly — no automation flags, no headless mode — and just keeps that one real, already-logged-in window running in the background (hidden) instead of relaunching a fresh instance per refresh.
 
 ## Privacy
 

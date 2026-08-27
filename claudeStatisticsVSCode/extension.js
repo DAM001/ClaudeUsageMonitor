@@ -13,9 +13,23 @@ const SYSTEM_BROWSER_PATHS = [
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
     path.join(process.env.LOCALAPPDATA || "", "Google\\Chrome\\Application\\chrome.exe"),
+    "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    path.join(process.env.LOCALAPPDATA || "", "BraveSoftware\\Brave-Browser\\Application\\brave.exe"),
     "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 ];
+
+// A hidden window looks occluded/backgrounded to Chromium, which would throttle its
+// timers and stall the periodic fetch in fetchUsage(). These keep it running normally.
+const BACKGROUND_ARGS = [
+    "--disable-background-timer-throttling",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-renderer-backgrounding",
+    "--disable-features=CalculateNativeWinOcclusion"
+];
+
+const OFFSCREEN_ARG = "--window-position=-32000,-32000";
 
 let statusBarItem;
 let refreshTimer;
@@ -168,13 +182,17 @@ async function tryReconnect(context) {
         const b = await chromium.connectOverCDP(`http://127.0.0.1:${info.port}`);
         browser = b;
         browserProcess = null; // owned by whichever window originally spawned it
+
+        // A browser from an older version, or one another window launched, may still be
+        // on screen. Skipped while logged out so an in-progress login stays visible.
+        if (context.globalState.get(LOGGED_IN_KEY, false)) hideProcessWindows(info.pid);
         return b;
     } catch {
         return null;
     }
 }
 
-async function launchBrowser(context) {
+async function launchBrowser(context, { visible = false } = {}) {
     await vscode.workspace.fs.createDirectory(context.globalStorageUri);
     const port = await getFreePort();
 
@@ -183,8 +201,13 @@ async function launchBrowser(context) {
         `--user-data-dir=${profileDir(context)}`,
         "--no-first-run",
         "--no-default-browser-check",
-        "--disable-blink-features=AutomationControlled"
+        "--disable-blink-features=AutomationControlled",
+        ...BACKGROUND_ARGS
     ];
+
+    // Placed off-screen from the first frame so no window flashes into view before
+    // hideProcessWindows() below gets to it. Login is the one case we want visible.
+    if (!visible) args.push(OFFSCREEN_ARG);
 
     // Detached + unref'd so this browser survives VS Code restarts/reloads —
     // other windows (and future sessions) reconnect to it via connection.json
@@ -192,6 +215,7 @@ async function launchBrowser(context) {
     browserProcess = spawn(findBrowserExecutable(), args, { stdio: "ignore", detached: true });
     browserProcess.unref();
     const pid = browserProcess.pid;
+    if (!visible) hideProcessWindows(pid);
 
     browserProcess.on("exit", () => {
         browserProcess = null;
@@ -205,14 +229,14 @@ async function launchBrowser(context) {
     return browser;
 }
 
-async function ensureBrowser(context) {
+async function ensureBrowser(context, opts) {
     if (browser && browser.isConnected()) return browser;
     if (launching) return launching;
 
     launching = (async () => {
         const reused = await tryReconnect(context);
         if (reused) return reused;
-        return launchBrowser(context);
+        return launchBrowser(context, opts);
     })();
 
     try {
@@ -232,8 +256,63 @@ async function minimizeWindow(page) {
     }
 }
 
+// SW_HIDE on the browser's own window: it leaves the taskbar and Alt-Tab entirely,
+// unlike a minimize. .NET's MainWindowHandle only reports *visible* top-level windows,
+// so re-reading it in a loop hides each window Chromium puts up during startup.
+function hideProcessWindows(pid) {
+    if (process.platform !== "win32" || !pid) return;
+
+    const script = [
+        "$ErrorActionPreference = 'SilentlyContinue'",
+        "Add-Type -Namespace Win -Name Api -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'",
+        `$p = Get-Process -Id ${pid}`,
+        'if (-not $p) { exit }',
+        'for ($i = 0; $i -lt 40; $i++) {',
+        '  if ($p.HasExited) { break }',
+        '  $p.Refresh()',
+        '  $h = $p.MainWindowHandle',
+        '  if ($h -ne [IntPtr]::Zero) { [Win.Api]::ShowWindow($h, 0) | Out-Null }',
+        '  Start-Sleep -Milliseconds 250',
+        '}'
+    ].join("\n");
+
+    // -EncodedCommand sidesteps the quoting mess of passing this through argv.
+    const encoded = Buffer.from(script, "utf16le").toString("base64");
+    // Deliberately NOT detached: a detached powershell.exe silently never executes here,
+    // and this helper only lives ~10s anyway. windowsHide keeps its console from flashing.
+    const ps = spawn(
+        "powershell.exe",
+        ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
+        { stdio: "ignore", windowsHide: true }
+    );
+    ps.on("error", () => {});
+    ps.unref();
+}
+
+async function hideWindow(context, page) {
+    // Elsewhere there's no ShowWindow equivalent to reach for, so minimizing is the best available.
+    if (process.platform !== "win32") {
+        await minimizeWindow(page);
+        return;
+    }
+
+    try {
+        const session = await page.context().newCDPSession(page);
+        const { windowId } = await session.send("Browser.getWindowForTarget");
+        await session.send("Browser.setWindowBounds", {
+            windowId,
+            bounds: { windowState: "normal", left: -32000, top: -32000, width: 1200, height: 900 }
+        });
+    } catch {
+        // best effort — the ShowWindow pass below is what actually hides it
+    }
+
+    const info = await readConnectionInfo(context);
+    hideProcessWindows(browserProcess?.pid || info?.pid);
+}
+
 async function login(context) {
-    const b = await ensureBrowser(context);
+    const b = await ensureBrowser(context, { visible: true });
     const ctx = b.contexts()[0] || (await b.newContext());
     const page = await ctx.newPage();
     await page.goto("https://claude.ai/login", { waitUntil: "domcontentloaded" });
@@ -251,10 +330,10 @@ async function login(context) {
 
     await context.globalState.update(LOGGED_IN_KEY, true);
     usagePage = page;
-    await minimizeWindow(page);
+    await hideWindow(context, page);
 
     vscode.window.showInformationMessage(
-        "Logged in. The browser window minimized itself — usage will now update in the status bar automatically."
+        "Logged in. The browser window hid itself — usage will now update in the status bar automatically."
     );
 
     await updateStatusBar(context);
@@ -278,7 +357,7 @@ async function fetchUsage(context) {
         if (!usagePage) {
             usagePage = await ctx.newPage();
             await usagePage.goto("https://claude.ai/", { waitUntil: "domcontentloaded" });
-            await minimizeWindow(usagePage);
+            await hideWindow(context, usagePage);
         }
     }
 

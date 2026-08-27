@@ -18,18 +18,35 @@ body {
 /* Refresh icon */
 #refreshBtn {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 18px;
-    height: 18px;
+    top: -8px;
+    right: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
     cursor: pointer;
     opacity: 0.75;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+#refreshBtn img {
+    width: 18px;
+    height: 18px;
+    display: block;
+    pointer-events: none;
 }
 
 #refreshBtn:hover {
     opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
     transform: rotate(20deg);
+}
+
+#refreshBtn:active {
+    background: rgba(255, 255, 255, 0.16);
 }
 
 /* Last updated timestamp */
@@ -48,6 +65,44 @@ h2 {
     margin-bottom: 18px;
     margin-top: 4px;
     color: var(--text-color);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    color: var(--secondary-text-color);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+}
+
+.tab-btn.active {
+    color: var(--theme-color);
+    border-bottom-color: var(--theme-color);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
 }
 
 /* Inputs */

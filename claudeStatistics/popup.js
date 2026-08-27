@@ -14,11 +14,14 @@ const title7d = document.getElementById("popup-7d-title");
 const bar7d = document.getElementById("popup-7d-bar");
 const reset7d = document.getElementById("popup-7d-reset");
 
-// Load settings
-chrome.storage.local.get(["orgId", "showUsage", "refreshRate"], (res) => {
+// Load settings, then auto-fetch usage once we actually have an org ID
+chrome.storage.local.get(["orgId", "showUsage", "refreshRate", "activeTab"], (res) => {
     if (res.orgId) orgInput.value = res.orgId;
     toggleUsage.checked = res.showUsage ?? true;
     if (res.refreshRate) refreshRateInput.value = res.refreshRate;
+    if (res.activeTab) setActiveTab(res.activeTab);
+
+    refresh();
 });
 
 // Save instantly
@@ -106,7 +109,21 @@ headerTitle.addEventListener("click", () => {
     chrome.tabs.create({ url: "https://claude.ai/new" });
 });
 
-// Auto-refresh when the popup becomes visible
-document.addEventListener("DOMContentLoaded", () => {
-    refresh();
+// Tabs
+const tabButtons = document.querySelectorAll(".tab-btn");
+
+function setActiveTab(tab) {
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+    document.querySelectorAll(".tab-panel").forEach((panel) => {
+        panel.classList.toggle("active", panel.id === `tab-${tab}`);
+    });
+}
+
+tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+        setActiveTab(btn.dataset.tab);
+        chrome.storage.local.set({ activeTab: btn.dataset.tab });
+    });
 });

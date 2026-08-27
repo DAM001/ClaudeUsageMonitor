@@ -11,57 +11,69 @@
 <body>
 
     <!-- Refresh icon -->
-    <img id="refreshBtn" src="assets/refresh.png" alt="Refresh">
+    <button id="refreshBtn" type="button" aria-label="Refresh">
+        <img src="assets/refresh.png" alt="">
+    </button>
 
     <h2 id="headerTitle" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
         <img src="assets/icon.png" alt="Claude Logo" style="width: 24px; height: 24px;">
         <span>Claude Usage Monitor</span>
     </h2>
 
-    <div class="section">
-        <label for="orgId">Organization ID</label>
-        <input id="orgId" type="password" placeholder="Enter org ID">
+    <div class="tabs">
+        <button class="tab-btn active" id="tabBtnUsage" type="button" data-tab="usage">Usage</button>
+        <button class="tab-btn" id="tabBtnSettings" type="button" data-tab="settings">Settings</button>
     </div>
 
-    <div class="section">
-        <label for="refreshRate">Refresh rate (s)</label>
-        <input id="refreshRate" type="number" placeholder="60" value="60">
-    </div>
-
-    <div class="section toggle-wrap">
-        <span class="toggle-label">Show usage in Claude</span>
-
-        <label class="switch">
-            <input id="toggleUsage" type="checkbox">
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <!-- Usage sliders -->
-    <div id="popup-usage">
-        <div class="usage-block">
-            <div class="usage-line">
-                <span class="usage-title" id="popup-5h-title">5h:</span>
-                <span class="usage-reset" id="popup-5h-reset">--</span>
+    <!-- Usage tab -->
+    <div id="tab-usage" class="tab-panel active">
+        <div id="popup-usage">
+            <div class="usage-block">
+                <div class="usage-line">
+                    <span class="usage-title" id="popup-5h-title">5h:</span>
+                    <span class="usage-reset" id="popup-5h-reset">--</span>
+                </div>
+                <div class="usage-bar-outer">
+                    <div class="usage-bar-inner" id="popup-5h-bar"></div>
+                </div>
             </div>
-            <div class="usage-bar-outer">
-                <div class="usage-bar-inner" id="popup-5h-bar"></div>
+
+            <div class="usage-block">
+                <div class="usage-line">
+                    <span class="usage-title" id="popup-7d-title">7d:</span>
+                    <span class="usage-reset" id="popup-7d-reset">--</span>
+                </div>
+                <div class="usage-bar-outer">
+                    <div class="usage-bar-inner" id="popup-7d-bar"></div>
+                </div>
             </div>
         </div>
 
-        <div class="usage-block">
-            <div class="usage-line">
-                <span class="usage-title" id="popup-7d-title">7d:</span>
-                <span class="usage-reset" id="popup-7d-reset">--</span>
-            </div>
-            <div class="usage-bar-outer">
-                <div class="usage-bar-inner" id="popup-7d-bar"></div>
-            </div>
-        </div>
+        <!-- Timestamp at bottom -->
+        <div id="lastUpdated">Updated: --:--</div>
     </div>
 
-    <!-- Timestamp at bottom -->
-    <div id="lastUpdated">Updated: --:--</div>
+    <!-- Settings tab -->
+    <div id="tab-settings" class="tab-panel">
+        <div class="section">
+            <label for="orgId">Organization ID</label>
+            <input id="orgId" type="password" placeholder="Enter org ID">
+        </div>
+
+        <div class="section">
+            <label for="refreshRate">Refresh rate (s)</label>
+            <input id="refreshRate" type="number" placeholder="60" value="60">
+        </div>
+
+        <div class="section toggle-wrap">
+            <span class="toggle-label">Show usage in Claude</span>
+
+            <label class="switch">
+                <input id="toggleUsage" type="checkbox">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 
     <script src="popup.js"></script>
 </body>

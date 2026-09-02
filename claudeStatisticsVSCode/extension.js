@@ -65,7 +65,7 @@ function renderBar(percent, width = 12) {
 
     const bar = "█".repeat(fullBlocks) +
         (hasPartial ? EIGHTHS[remainder] : "") +
-        " ".repeat(emptyCount);
+        "░".repeat(emptyCount);
 
     return `[${bar}]`;
 }
